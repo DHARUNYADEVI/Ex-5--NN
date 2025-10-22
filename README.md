@@ -12,15 +12,10 @@ To implement a XOR gate classification using Radial Basis Function  Neural Netwo
 <P>XOR is a classification problem, as it renders binary distinct outputs. If we plot the INPUTS vs OUTPUTS for the XOR gate, as shown in figure below </P>
 
 
-
-
 <P>The graph plots the two inputs corresponding to their output. Visualizing this plot, we can see that it is impossible to separate the different outputs (1 and 0) using a linear equation.
 A Radial Basis Function Network (RBFN) is a particular type of neural network. The RBFN approach is more intuitive than MLP. An RBFN performs classification by measuring the input’s similarity to examples from the training set. Each RBFN neuron stores a “prototype”, which is just one of the examples from the training set. When we want to classify a new input, each neuron computes the Euclidean distance between the input and its prototype. Thus, if the input more closely resembles the class A prototypes than the class B prototypes, it is classified as class A ,else class B.
 A Neural network with input layer, one hidden layer with Radial Basis function and a single node output layer (as shown in figure below) will be able to classify the binary data according to XOR output.
 </P>
-
-
-
 
 
 <H3>ALGORITHM:</H3>
@@ -34,63 +29,77 @@ Step 6: Test the network for accuracy<br>
 Step 7: Plot the Input space and Hidden space of RBF NN for XOR classification.
 
 <H3>PROGRAM:</H3>
+
 ```py
 import numpy as np
 import matplotlib.pyplot as plt
 
-X = np.array([[0,0],[0,1],[1,0],[1,1]])
-Y = np.array([0,1,1,0])
+def gaussian_rbf(x,landmark,gamma=1):
+  return np.exp(-gamma*np.linalg.norm(x-landmark)**2)
 
-centers = np.array([[0,1],[1,0]])
-sigma = 0.5
+def end_to_end(X1,X2,ys,mu1,mu2):
+  from_1=[gaussian_rbf(i,mu1) for i in zip(X1,X2)]
+  from_2=[gaussian_rbf(i,mu2) for i in zip(X1,X2)]
 
-def rbf(x, c, sigma):
-    return np.exp(-np.linalg.norm(x-c)**2 / (2*sigma**2))
+  plt.figure(figsize=(13,5))
+  plt.subplot(1,2,1)
+  plt.scatter((X1[0],X1[3]),(X2[0],X2[3]),label="Class_0")
+  plt.scatter((X1[1],X1[2]),(X2[1],X2[2]),label="Class_1")
+  plt.xlabel("$X1$",fontsize=15)
+  plt.ylabel("$X2$",fontsize=15)
+  plt.title("Xor: Linearly Inseparable",fontsize=15)
+  plt.legend()
 
-phi = np.zeros((len(X), len(centers)))
-for i in range(len(X)):
-    for j in range(len(centers)):
-        phi[i][j] = rbf(X[i], centers[j], sigma)
+  plt.subplot(1,2,2)
+  plt.scatter(from_1[0],from_2[0],label="Class_0")
+  plt.scatter(from_1[1],from_2[1],label="Class_1")
+  plt.scatter(from_1[2],from_2[2],label="Class_1")
+  plt.scatter(from_1[3],from_2[3],label="Class_0")
+  plt.plot([0,0.95],[0.95,0],"k--")
+  plt.annotate("Seperating hyperplane",xy=(0.4,0.55),xytext=(0.55,0.66),arrowprops=dict(facecolor="black",shrink=0.05))
+  plt.xlabel(f"$mu1$: {(mu1)}",fontsize=15)
+  plt.ylabel(f"$mu2$: {(mu2)}",fontsize=15)
+  plt.title("Transformed Inputs: Linearly Seperable",fontsize=15)
+  plt.legend()
+  
+  A=[]
+  for i,j in zip(from_1,from_2):
+    temp=[]
+    temp.append(i)
+    temp.append(j)
+    temp.append(1)
+    A.append(temp)
+  A=np.array(A)
+  W=np.linalg.inv(A.T.dot(A)).dot(A.T).dot(ys)
+  print(np.round(A.dot(W)))
+  print(ys)
+  print(f"Weights: {W}")
+  return W
 
-W = np.dot(np.linalg.pinv(phi), Y)
+def predict_matrix(point,weights):
+  gaussian_rbf_0=gaussian_rbf(np.array(point),mu1)
+  gaussian_rbf_1=gaussian_rbf(np.array(point),mu2)
+  A=np.array([gaussian_rbf_0,gaussian_rbf_1,1])
+  return np.round(A.dot(weights))
 
-Y_pred = np.dot(phi, W)
-Y_pred = np.round(Y_pred)
+X1=np.array([0,0,1,1])
+X2=np.array([0,1,0,1])
+ys=np.array([0,1,1,0])
+mu1=np.array([0,1])
+mu2=np.array([1,0])
+w=end_to_end(X1,X2,ys,mu1,mu2)
 
-fig, axs = plt.subplots(1, 2, figsize=(10, 4))
+print(f"Input:{np.array([0, 0])}, Predicted: {predict_matrix(np.array([0, 0]),w)}")
+print(f"Input:{np.array([0, 1])}, Predicted: {predict_matrix(np.array([0, 1]),w)}")
+print(f"Input:{np.array([1, 0])}, Predicted: {predict_matrix(np.array([1, 0]),w)}")
+print(f"Input:{np.array([1, 1])}, Predicted: {predict_matrix(np.array([1, 1]),w)}")
 
-for i, x in enumerate(X):
-    color = 'orange' if Y[i]==1 else 'blue'
-    label = f'Class_{Y[i]}' if i<2 else None
-    axs[0].scatter(x[0], x[1], c=color, s=100, label=label)
-axs[0].set_title('XOR: Linearly Inseparable')
-axs[0].set_xlabel('X1')
-axs[0].set_ylabel('X2')
-axs[0].legend()
-axs[0].grid(True)
 
-for i in range(len(X)):
-    color = 'orange' if Y[i]==1 else 'blue'
-    axs[1].scatter(phi[i,0], phi[i,1], c=color, s=100)
-axs[1].set_title('Transformed Inputs: Linearly Separable')
-axs[1].set_xlabel('mu1: [0 1]')
-axs[1].set_ylabel('mu2: [1 0]')
-
-x_line = np.linspace(0, 1, 100)
-y_line = -x_line + 1
-axs[1].plot(x_line, y_line, 'k--', label='Separating hyperplane')
-axs[1].legend()
-axs[1].grid(True)
-
-plt.tight_layout()
-plt.show()
-
-print("Predicted Output:", Y_pred.astype(int))
-print("Actual Output:   ", Y)
 ```
 
 <H3>OUTPUT:</H3>
-<img width="1127" height="506" alt="image" src="https://github.com/user-attachments/assets/fa1a61f6-5d9d-4ced-b9fb-fd8e023b75c1" />
+
+<img width="1190" height="637" alt="image" src="https://github.com/user-attachments/assets/3c858b7f-84df-47da-a31d-6d17ce35c8e3" />
 
 
 <H3>Result:</H3>
