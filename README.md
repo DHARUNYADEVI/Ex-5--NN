@@ -1,7 +1,7 @@
-H3>ENTER YOUR NAME</H3>
-<H3>ENTER YOUR REGISTER NO.</H3>
+<H3>NAME:DHARUNYADEVI S</H3>
+<H3>REGISTER NUMBER:212223220018</H3>
 <H3>EX. NO.5</H3>
-<H3>DATE:</H3>
+<H3>DATE:22/10/2025</H3>
 <H1 ALIGN =CENTER>Implementation of XOR  using RBF</H1>
 <H3>Aim:</H3>
 To implement a XOR gate classification using Radial Basis Function  Neural Network.
@@ -34,12 +34,64 @@ Step 6: Test the network for accuracy<br>
 Step 7: Plot the Input space and Hidden space of RBF NN for XOR classification.
 
 <H3>PROGRAM:</H3>
+```py
+import numpy as np
+import matplotlib.pyplot as plt
 
-Insert  your code here
+X = np.array([[0,0],[0,1],[1,0],[1,1]])
+Y = np.array([0,1,1,0])
+
+centers = np.array([[0,1],[1,0]])
+sigma = 0.5
+
+def rbf(x, c, sigma):
+    return np.exp(-np.linalg.norm(x-c)**2 / (2*sigma**2))
+
+phi = np.zeros((len(X), len(centers)))
+for i in range(len(X)):
+    for j in range(len(centers)):
+        phi[i][j] = rbf(X[i], centers[j], sigma)
+
+W = np.dot(np.linalg.pinv(phi), Y)
+
+Y_pred = np.dot(phi, W)
+Y_pred = np.round(Y_pred)
+
+fig, axs = plt.subplots(1, 2, figsize=(10, 4))
+
+for i, x in enumerate(X):
+    color = 'orange' if Y[i]==1 else 'blue'
+    label = f'Class_{Y[i]}' if i<2 else None
+    axs[0].scatter(x[0], x[1], c=color, s=100, label=label)
+axs[0].set_title('XOR: Linearly Inseparable')
+axs[0].set_xlabel('X1')
+axs[0].set_ylabel('X2')
+axs[0].legend()
+axs[0].grid(True)
+
+for i in range(len(X)):
+    color = 'orange' if Y[i]==1 else 'blue'
+    axs[1].scatter(phi[i,0], phi[i,1], c=color, s=100)
+axs[1].set_title('Transformed Inputs: Linearly Separable')
+axs[1].set_xlabel('mu1: [0 1]')
+axs[1].set_ylabel('mu2: [1 0]')
+
+x_line = np.linspace(0, 1, 100)
+y_line = -x_line + 1
+axs[1].plot(x_line, y_line, 'k--', label='Separating hyperplane')
+axs[1].legend()
+axs[1].grid(True)
+
+plt.tight_layout()
+plt.show()
+
+print("Predicted Output:", Y_pred.astype(int))
+print("Actual Output:   ", Y)
+```
 
 <H3>OUTPUT:</H3>
+<img width="1127" height="506" alt="image" src="https://github.com/user-attachments/assets/fa1a61f6-5d9d-4ced-b9fb-fd8e023b75c1" />
 
-Show your code here
 
 <H3>Result:</H3>
 Thus , a Radial Basis Function Neural Network is implemented to classify XOR data.
